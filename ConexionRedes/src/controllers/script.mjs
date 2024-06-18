@@ -2,15 +2,15 @@ import Graph from "../models/Graph.mjs";
 
 const graph = new Graph();
 
-// Obtener referencias a los elementos del DOM
 const btnAgregarDestino = document.getElementById("AddRed");
 const btnAgregarConexion = document.getElementById("AddRed2");
 const btnRecorridoProfundidad = document.getElementById("profundidad");
 const btnRecorridoAnchura = document.getElementById("anchura");
+const btnRedMasRapida = document.getElementById("redMasRapida");
 const tbodyProfundidad = document.getElementById("tbodyProfundidad");
 const tbodyAnchura = document.getElementById("tbodyAnchura");
+const tbodyDijkstra = document.getElementById("tbodyDijkstra");
 
-// Función para mostrar alertas personalizadas
 function mostrarAlerta(icon, title, message) {
     Swal.fire({
         icon: icon,
@@ -20,11 +20,10 @@ function mostrarAlerta(icon, title, message) {
     });
 }
 
-// Evento para agregar un destino al grafo
 btnAgregarDestino.addEventListener("click", () => {
-    const red = document.getElementById("redes").value.trim(); // Obtener el valor y quitar espacios en blanco al inicio y final
+    const red = document.getElementById("redes").value.trim();
     
-    if (red !== "") { // Verificar que el valor no esté vacío
+    if (red !== "") {
         if (graph.addVertex(red)) {
             mostrarAlerta('success', 'Registro Exitoso', `Se registró la red ${red}`);
         } else {
@@ -35,59 +34,125 @@ btnAgregarDestino.addEventListener("click", () => {
     }
 });
 
-// Evento para agregar una conexión al grafo
 btnAgregarConexion.addEventListener("click", () => {
     const redInicial = document.getElementById("inicial").value.trim();
     const destino = document.getElementById("destino").value.trim();
     const peso = parseInt(document.getElementById("peso").value);
 
-    if (redInicial !== "" && destino !== "") { // Verificar que ambos campos no estén vacíos
+    if (redInicial !== "" && destino !== "" && !isNaN(peso)) {
         if (graph.addEdge(redInicial, destino, peso)) {
             mostrarAlerta('success', 'Conexión Agregada', 'La conexión se agregó correctamente');
         } else {
             mostrarAlerta('error', 'Error', 'No se pudo agregar la conexión');
         }
     } else {
-        mostrarAlerta('error', 'Error', 'Debe ingresar ambas redes para la conexión');
+        mostrarAlerta('error', 'Error', 'Debe ingresar ambas redes y el peso para la conexión');
     }
 });
 
-// Evento para realizar un recorrido en profundidad (DFS)
 btnRecorridoProfundidad.addEventListener("click", () => {
-    // Limpiar contenido anterior
     tbodyProfundidad.innerHTML = '';
-    
-    // Obtener el primer vértice del grafo
-    const vertices = [...graph.getVertices()][0];
-    
-    // Realizar recorrido en profundidad (DFS)
-    graph.dfs(vertices, (vertex) => {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.textContent = vertex;
-        row.appendChild(cell);
-        tbodyProfundidad.appendChild(row);
+
+    const vertices = [...graph.getVertices()];
+    if (vertices.length === 0) {
+        mostrarAlerta('error', 'Error', 'No hay vértices en el grafo');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Ejecutando Recorrido De Profundidad',
+        text: 'Por favor espere...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
-    
-    mostrarAlerta('info', 'Ejecutando Recorrido De Profundidad', 'Recorrido en profundidad completado');
+
+    setTimeout(() => {
+        graph.dfs(vertices[0], (vertex) => {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.textContent = vertex;
+            row.appendChild(cell);
+            tbodyProfundidad.appendChild(row);
+        });
+
+        Swal.close();
+    }, 1000);
 });
 
-// Evento para realizar un recorrido en anchura (BFS)
 btnRecorridoAnchura.addEventListener("click", () => {
-    // Limpiar contenido anterior
     tbodyAnchura.innerHTML = '';
-    
-    // Obtener el primer vértice del grafo
-    const vertices = [...graph.getVertices()][0];
-    
-    // Realizar recorrido en anchura (BFS)
-    graph.bfs(vertices, (vertex) => {
-        const row = document.createElement('tr');
-        const cell = document.createElement('td');
-        cell.textContent = vertex;
-        row.appendChild(cell);
-        tbodyAnchura.appendChild(row);
+
+    const vertices = [...graph.getVertices()];
+    if (vertices.length === 0) {
+        mostrarAlerta('error', 'Error', 'No hay vértices en el grafo');
+        return;
+    }
+
+    Swal.fire({
+        title: 'Ejecutando Recorrido De Anchura',
+        text: 'Por favor espere...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
-    
-    mostrarAlerta('info', 'Ejecutando Recorrido De Anchura', 'Recorrido en anchura completado');
+
+    setTimeout(() => {
+        graph.bfs(vertices[0], (vertex) => {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.textContent = vertex;
+            row.appendChild(cell);
+            tbodyAnchura.appendChild(row);
+        });
+
+        Swal.close();
+    }, 1000);
+});
+
+btnRedMasRapida.addEventListener("click", () => {
+    tbodyDijkstra.innerHTML = '';
+
+    const inicioDijkstra = document.getElementById("inicioDijkstra").value.trim();
+    const destinoDijkstra = document.getElementById("destinoDijkstra").value.trim();
+
+    if (inicioDijkstra !== "" && destinoDijkstra !== "") {
+        Swal.fire({
+            title: 'Buscando la ruta más rápida',
+            text: 'Por favor espere...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        setTimeout(() => {
+            const distance = graph.dijkstra(inicioDijkstra, destinoDijkstra);
+            if (distance !== Infinity) {
+                const row = document.createElement('tr');
+                const cellDistance = document.createElement('td');
+                cellDistance.textContent = distance;
+                row.appendChild(cellDistance);
+                tbodyDijkstra.appendChild(row);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Ruta Más Rápida',
+                    text: `La distancia más rápida entre ${inicioDijkstra} y ${destinoDijkstra} es ${distance}`,
+                    confirmButtonColor: '#007bff'
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se encontró una ruta entre las redes especificadas',
+                    confirmButtonColor: '#007bff'
+                });
+            }
+        }, 1000);
+    } else {
+        mostrarAlerta('error', 'Error', 'Debe ingresar ambas redes para encontrar la ruta más rápida');
+    }
 });
